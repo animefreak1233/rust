@@ -1799,6 +1799,12 @@ fn explicit_predicates_of<'a, 'tcx>(
             &hir::WherePredicate::BoundPredicate(ref bound_pred) => {
                 let ty = icx.to_ty(&bound_pred.bounded_ty);
 
+                // Keep the type around in a WF predicate, in case of no bounds.
+                // That way, `where Ty:` is not a complete noop (see #53696).
+                if bound_pred.bounds.is_empty() {
+                    predicates.push(ty::Predicate::WellFormed(ty));
+                }
+
                 for bound in bound_pred.bounds.iter() {
                     match bound {
                         &hir::GenericBound::Trait(ref poly_trait_ref, _) => {
